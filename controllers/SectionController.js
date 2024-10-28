@@ -1,3 +1,4 @@
+const { json } = require("express");
 const Section = require("../models/Section");
 const addSection = async (req, res) => {
   try {
@@ -52,8 +53,30 @@ const getSectionById = async (req, res) => {
     res.status(500).json({ message: "Server error", error });
   }
 };
+const getStudentsInSection = async (req, res) => {
+  const sectionId = req.params.id; // Get the section ID from request parameters
+
+  try {
+    const section = await Section.findById(sectionId).populate("students");
+
+    if (!section) {
+      return res.status(404).json({ message: "Section not found" });
+    }
+
+    return res.status(200).json({
+      sectionId: section._id,
+      students: section.students,
+    });
+  } catch (error) {
+    console.error("Error fetching students:", error);
+    return res
+      .status(500)
+      .json({ message: "Server error", error: error.message });
+  }
+};
 module.exports = {
   addSection,
   getSectionById,
   getMySections,
+  getStudentsInSection,
 };
