@@ -15,7 +15,17 @@ const userSchema = new mongoose.Schema(
     LRN: { type: String, unique: true, sparse: true },
     avatar: { type: String, default: "" },
     sections: [{ type: mongoose.Schema.Types.ObjectId, ref: "Section" }],
+    finalGrade: [
+      { gradeLevel: { type: mongoose.Schema.Types.ObjectId }, ref: "Subject" },
+    ],
+    status: {
+      type: String,
+      enum: ["blocked", "Dropped", "Active"],
+      default: "active",
+      required: false,
+    },
   },
+
   { timestamps: true }
 );
 

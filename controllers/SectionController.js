@@ -65,7 +65,7 @@ const getStudentsInSection = async (req, res) => {
 
     return res.status(200).json({
       sectionId: section._id,
-      students: section.students,
+      students: section.students[],
     });
   } catch (error) {
     console.error("Error fetching students:", error);
