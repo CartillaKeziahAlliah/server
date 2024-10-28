@@ -1,0 +1,1 @@
+anhi dre inyuhang route para magamit ang controllers didto sa server.js
