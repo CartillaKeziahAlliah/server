@@ -1,3 +1,4 @@
+const { json } = require("express");
 const Quiz = require("../models/Quiz"); // Update model import to Quiz
 const Subject = require("../models/Subject");
 
@@ -191,5 +192,143 @@ exports.editQuiz = async (req, res) => {
     res
       .status(500)
       .json({ message: "Error updating quiz", error: error.message });
+  }
+};
+exports.checkQuizAttempt = async (req, res) => {
+  const { userId, quizId } = req.params;
+
+  try {
+    // Find the quiz by ID and see if the user ID exists in the scores array
+    const quiz = await Quiz.findOne({
+      _id: quizId,
+      "scores.studentId": userId,
+    });
+
+    if (quiz) {
+      // If the user has a score, they’ve taken the quiz
+      return res.json({ hasTakenQuiz: true });
+    } else {
+      // If no score entry for this user, they haven’t taken it
+      return res.json({ hasTakenQuiz: false });
+    }
+  } catch (error) {
+    console.error("Error checking quiz attempt:", error);
+    res.status(500).json({ message: "Server error." });
+  }
+};
+
+// Controller function to get all scores of students for a specific quiz
+exports.getQuizScores = async (req, res) => {
+  try {
+    const quizId = req.params.quizId; // Get the quiz ID from the request parameters
+
+    // Fetch the quiz by ID and populate scores with student details
+    const quiz = await Quiz.findById(quizId)
+      .populate("scores.studentId", "name email")
+      .select("scores"); // Select only the scores field
+
+    if (!quiz) {
+      return res.status(404).json({ message: "Quiz not found" });
+    }
+
+    // Return the scores array with full details
+    const scoresDetails = quiz.scores.map((score) => ({
+      studentId: score.studentId, // populated studentId object
+      obtainedMarks: score.obtainedMarks,
+      passed: score.passed,
+      examDate: score.examDate,
+    }));
+
+    res.json(scoresDetails); // Send the detailed scores
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ message: "Server error", error: error.message });
+  }
+};
+
+exports.submitExam = async (req, res) => {
+  try {
+    const { quizId, userId } = req.params; // Get quiz ID and user ID from the request parameters
+    const { userAnswers } = req.body; // Get user answers from request body
+
+    // Find the quiz by ID
+    const quiz = await Quiz.findById(quizId).populate("scores.studentId");
+    if (!quiz) {
+      return res.status(404).json({ message: "Quiz not found." });
+    }
+
+    // Check if the user has already submitted this quiz
+    const alreadySubmitted = quiz.scores.some(
+      (score) => score.studentId.toString() === userId
+    );
+    if (alreadySubmitted) {
+      return res
+        .status(400)
+        .json({ message: "You have already submitted this quiz." });
+    }
+
+    // Calculate the score
+    let obtainedMarks = 0;
+    let passed = false; // Initialize passed as false
+    const totalQuestions = quiz.questions.length;
+
+    quiz.questions.forEach((question, index) => {
+      const userAnswer = userAnswers[index];
+      if (userAnswer !== undefined) {
+        const selectedOption = question.options[userAnswer];
+        if (selectedOption && selectedOption.isCorrect) {
+          obtainedMarks += question.marks; // Add marks for correct answer
+        }
+      }
+    });
+
+    // Example passing criteria: student must score at least 75% of total marks
+    if (obtainedMarks >= quiz.totalMarks * 0.75) {
+      passed = true;
+    }
+
+    // Save the score
+    quiz.scores.push({
+      studentId: userId,
+      obtainedMarks,
+      passed,
+      examDate: new Date(),
+    });
+
+    await quiz.save();
+
+    // Respond with the result
+    res.status(200).json({
+      message: "Exam submitted successfully.",
+      obtainedMarks,
+      totalMarks: quiz.totalMarks,
+      passed,
+    });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ message: "Server error. Please try again." });
+  }
+};
+exports.fetchScoresByUserId = async (req, res) => {
+  const userId = req.params.userId; // Assuming userID is passed as a URL parameter
+
+  try {
+    const quizzes = await Quiz.find(
+      { "scores.studentId": userId },
+      { "scores.$": 1, title: 1, description: 1, subject: 1, totalMarks: 1 }
+    ).populate("subject", "name");
+
+    if (quizzes.length === 0) {
+      return res
+        .status(404)
+        .json({ message: "No scores found for this user." });
+    }
+
+    res.status(200).json(quizzes);
+  } catch (error) {
+    console.error("Error fetching scores by userID:", error);
+    res
+      .status(500)
+      .json({ message: "Internal server error", error: error.message });
   }
 };

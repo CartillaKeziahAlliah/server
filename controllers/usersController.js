@@ -1,3 +1,4 @@
+const { json } = require("express");
 const cloudinary = require("../config/cloudinary");
 const User = require("../models/User");
 const bcrypt = require("bcryptjs");
@@ -56,5 +57,34 @@ exports.updateProfile = async (req, res) => {
   } catch (error) {
     console.error("Error updating user profile:", error);
     res.status(500).json({ error: "Error updating user profile" });
+  }
+};
+exports.assignLRN = async (req, res) => {
+  const { LRN } = req.body; // Get user ID and LRN from the request body
+  const { userId } = req.params;
+  try {
+    // Check if the LRN is unique
+    const existingUser = await User.findOne({ LRN });
+    if (existingUser) {
+      return res
+        .status(400)
+        .json({ message: "LRN already in use by another user" });
+    }
+
+    // Update the user with the provided LRN
+    const user = await User.findByIdAndUpdate(
+      userId,
+      { LRN },
+      { new: true, runValidators: true }
+    );
+
+    if (!user) {
+      return res.status(404).json({ message: "User not found" });
+    }
+
+    res.status(200).json({ message: "LRN assigned successfully", user });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ error: "Failed to assign LRN to the user" });
   }
 };

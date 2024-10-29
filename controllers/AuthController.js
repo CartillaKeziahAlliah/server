@@ -24,7 +24,7 @@ exports.login = async (req, res) => {
     }
 
     // Check if the user is a 'user' and if they have an 'lrn'
-    if (user.role === "student" && !user.lrn) {
+    if (user.role === "student" && !user.LRN) {
       return res
         .status(403)
         .json({ error: "You have not been approved by the school" });
