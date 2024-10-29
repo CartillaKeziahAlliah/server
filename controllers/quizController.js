@@ -131,69 +131,7 @@ exports.getQuizzesBySubject = async (req, res) => {
 };
 
 // Retrieve a single quiz by ID
-exports.getQuizById = async (req, res) => {
-  try {
-    const { quizId } = req.params; // Change variable name to quizId
-    const quiz = await Quiz.findById(quizId).populate("subject");
 
-    if (!quiz) {
-      return res.status(404).json({ message: "Quiz not found" });
-    }
-
-    res.status(200).json(quiz);
-  } catch (error) {
-    res
-      .status(500)
-      .json({ message: "Failed to retrieve quiz", error: error.message });
-  }
-};
-
-// Delete a quiz
-exports.deleteQuiz = async (req, res) => {
-  try {
-    const { quizId } = req.params; // Change variable name to quizId
-
-    const deletedQuiz = await Quiz.findByIdAndDelete(quizId);
-
-    if (!deletedQuiz) {
-      return res.status(404).json({ message: "Quiz not found" });
-    }
-
-    res.status(200).json({ message: "Quiz deleted successfully" });
-  } catch (error) {
-    res
-      .status(500)
-      .json({ message: "Failed to delete quiz", error: error.message });
-  }
-};
-
-// Update an existing quiz
-exports.editQuiz = async (req, res) => {
-  const { quizId } = req.params; // Get quiz ID from the URL
-  const updatedData = req.body; // Get updated data from the request body
-
-  try {
-    // Find and update the quiz by ID
-    const updatedQuiz = await Quiz.findByIdAndUpdate(
-      quizId,
-      {
-        ...updatedData, // Spread the updated data to replace fields
-        updatedAt: Date.now(), // Update the 'updatedAt' field
-      },
-      { new: true, runValidators: true } // Return the updated document and validate the data
-    );
-
-    if (!updatedQuiz) {
-      return res.status(404).json({ message: "Quiz not found" });
-    }
-
-    res.status(200).json({ message: "Quiz updated successfully", updatedQuiz });
-  } catch (error) {
-    res
-      .status(500)
-      .json({ message: "Error updating quiz", error: error.message });
-  }
-};
 exports.checkQuizAttempt = async (req, res) => {
   const { userId, quizId } = req.params;
 
@@ -330,5 +268,68 @@ exports.fetchScoresByUserId = async (req, res) => {
     res
       .status(500)
       .json({ message: "Internal server error", error: error.message });
+  }
+};
+exports.getQuizById = async (req, res) => {
+  try {
+    const { quizId } = req.params; // Change variable name to quizId
+    const quiz = await Quiz.findById(quizId).populate("subject");
+
+    if (!quiz) {
+      return res.status(404).json({ message: "Quiz not found" });
+    }
+
+    res.status(200).json(quiz);
+  } catch (error) {
+    res
+      .status(500)
+      .json({ message: "Failed to retrieve quiz", error: error.message });
+  }
+};
+
+// Delete a quiz
+exports.deleteQuiz = async (req, res) => {
+  try {
+    const { quizId } = req.params; // Change variable name to quizId
+
+    const deletedQuiz = await Quiz.findByIdAndDelete(quizId);
+
+    if (!deletedQuiz) {
+      return res.status(404).json({ message: "Quiz not found" });
+    }
+
+    res.status(200).json({ message: "Quiz deleted successfully" });
+  } catch (error) {
+    res
+      .status(500)
+      .json({ message: "Failed to delete quiz", error: error.message });
+  }
+};
+
+// Update an existing quiz
+exports.editQuiz = async (req, res) => {
+  const { quizId } = req.params; // Get quiz ID from the URL
+  const updatedData = req.body; // Get updated data from the request body
+
+  try {
+    // Find and update the quiz by ID
+    const updatedQuiz = await Quiz.findByIdAndUpdate(
+      quizId,
+      {
+        ...updatedData, // Spread the updated data to replace fields
+        updatedAt: Date.now(), // Update the 'updatedAt' field
+      },
+      { new: true, runValidators: true } // Return the updated document and validate the data
+    );
+
+    if (!updatedQuiz) {
+      return res.status(404).json({ message: "Quiz not found" });
+    }
+
+    res.status(200).json({ message: "Quiz updated successfully", updatedQuiz });
+  } catch (error) {
+    res
+      .status(500)
+      .json({ message: "Error updating quiz", error: error.message });
   }
 };
