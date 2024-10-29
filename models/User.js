@@ -16,8 +16,9 @@ const userSchema = new mongoose.Schema(
     avatar: { type: String, default: "" },
     sections: [{ type: mongoose.Schema.Types.ObjectId, ref: "Section" }],
     finalGrade: [
-      { gradeLevel: { type: mongoose.Schema.Types.ObjectId }, ref: "Subject" },
+      { gradeLevel: { type: mongoose.Schema.Types.ObjectId, ref: "Subject" } },
     ],
+
     status: {
       type: String,
       enum: ["blocked", "Dropped", "Active"],
