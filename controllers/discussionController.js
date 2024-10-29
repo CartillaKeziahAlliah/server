@@ -80,34 +80,10 @@ const markAsRead = async (req, res) => {
     res.status(500).json({ message: error.message });
   }
 };
-const hasUserReadDiscussion = async (req, res) => {
-  const { discussionId, userId } = req.params; // Get discussion ID and user ID from request parameters
 
-  try {
-    // Find the discussion by ID
-    const discussion = await Discussion.findById(discussionId).select(
-      "studentsRead"
-    );
-
-    if (!discussion) {
-      return res.status(404).json({ message: "Discussion not found" });
-    }
-
-    // Check if the user ID is in the studentsRead array
-    const hasRead = discussion.studentsRead.some(
-      (student) => student.studentId === userId
-    );
-
-    return res.status(200).json({ hasRead });
-  } catch (error) {
-    console.error("Error checking read status:", error);
-    return res.status(500).json({ message: "Server error" });
-  }
-};
 module.exports = {
   createDiscussion,
   deleteDiscussion,
   getDiscussionsBySubjectId,
   markAsRead,
-  hasUserReadDiscussion,
 };
