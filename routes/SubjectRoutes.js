@@ -7,5 +7,6 @@ const router = express.Router();
 router.post("/", subjectController.addSubject);
 router.get("/:teacherId", subjectController.getAllSubjectsByTeacherId);
 router.get("/section/:sectionId", subjectController.getSubjectsBySectionId);
+router.get("/:studentId/subjects", subjectController.getStudentSubjects);
 
 module.exports = router;

@@ -95,7 +95,7 @@ const hasUserReadDiscussion = async (req, res) => {
 
     // Check if the user ID is in the studentsRead array
     const hasRead = discussion.studentsRead.some(
-      (student) => student.studentId.toString() === userId
+      (student) => student.studentId === userId
     );
 
     return res.status(200).json({ hasRead });
