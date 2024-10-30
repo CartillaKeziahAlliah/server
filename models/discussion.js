@@ -18,7 +18,7 @@ const discussionSchema = new mongoose.Schema(
     },
     studentsRead: [
       {
-        studentId: { type: mongoose.Schema.Types.ObjectId, ref: "Student" },
+        studentId: { type: mongoose.Schema.Types.ObjectId, ref: "User" },
         dateRead: { type: Date, default: Date.now },
       },
     ],
