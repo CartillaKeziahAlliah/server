@@ -5,7 +5,9 @@ const {
   deleteDiscussion,
   getDiscussionsBySubjectId,
   markAsRead,
+  getStudentsReadByDiscussionId,
 } = require("../controllers/discussionController"); // Adjust the path as necessary
+const { get } = require("mongoose");
 
 const router = express.Router();
 
@@ -20,5 +22,7 @@ router.get("/subject/:subjectId", getDiscussionsBySubjectId);
 
 // Mark a discussion as read
 router.patch("/:id/read", markAsRead);
+
+router.get("/:discussionId/students-read", getStudentsReadByDiscussionId);
 
 module.exports = router;

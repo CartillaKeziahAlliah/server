@@ -80,10 +80,33 @@ const markAsRead = async (req, res) => {
     res.status(500).json({ message: error.message });
   }
 };
+const getStudentsReadByDiscussionId = async (req, res) => {
+  const { discussionId } = req.params;
 
+  try {
+    const discussion = await Discussion.findById(discussionId)
+      .populate("studentsRead.studentId", "name email") // Adjust fields as per your Student schema
+      .exec();
+
+    if (!discussion) {
+      return res.status(404).json({ message: "Discussion not found" });
+    }
+
+    const studentsRead = discussion.studentsRead.map((entry) => ({
+      student: entry.studentId, // Contains populated student details
+      dateRead: entry.dateRead,
+    }));
+
+    res.status(200).json(studentsRead);
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ message: "Server error" });
+  }
+};
 module.exports = {
   createDiscussion,
   deleteDiscussion,
   getDiscussionsBySubjectId,
   markAsRead,
+  getStudentsReadByDiscussionId,
 };
