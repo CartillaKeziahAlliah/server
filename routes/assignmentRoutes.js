@@ -15,4 +15,8 @@ router.delete("/:assId", assignmentController.deleteAssignment);
 
 router.put("/:assId", assignmentController.editAssignment);
 
+router.get("/scores/:userId", assignmentController.fetchScoresByUserId);
+
+router.get("/:AssignmentId/scores", assignmentController.getAssScores);
+
 module.exports = router;

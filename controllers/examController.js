@@ -186,3 +186,28 @@ exports.editExam = async (req, res) => {
       .json({ message: "Error updating exam", error: error.message });
   }
 };
+exports.getExamScores = async (req, res) => {
+  try {
+    const examId = req.params.examId;
+
+    const exam = await Exam.findById(examId)
+      .populate("scores.studentId", "name email")
+      .select("scores");
+
+    if (!exam) {
+      return res.status(404).json({ message: "Assignment not found" });
+    }
+
+    const scoresDetails = exam.scores.map((score) => ({
+      studentId: score.studentId,
+      obtainedMarks: score.obtainedMarks,
+      passed: score.passed,
+      examDate: score.examDate,
+    }));
+
+    res.json(scoresDetails); // Send the detailed scores
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ message: "Server error", error: error.message });
+  }
+};

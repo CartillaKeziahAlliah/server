@@ -204,3 +204,52 @@ exports.editAssignment = async (req, res) => {
       .json({ message: "Error updating assignment", error: error.message });
   }
 };
+exports.fetchScoresByUserId = async (req, res) => {
+  const userId = req.params.userId; // Assuming userID is passed as a URL parameter
+
+  try {
+    const quizzes = await Assignment.find(
+      { "scores.studentId": userId },
+      { "scores.$": 1, title: 1, description: 1, subject: 1, totalMarks: 1 }
+    ).populate("subject", "name");
+
+    if (quizzes.length === 0) {
+      return res
+        .status(404)
+        .json({ message: "No scores found for this user." });
+    }
+
+    res.status(200).json(quizzes);
+  } catch (error) {
+    console.error("Error fetching scores by userID:", error);
+    res
+      .status(500)
+      .json({ message: "Internal server error", error: error.message });
+  }
+};
+
+exports.getAssScores = async (req, res) => {
+  try {
+    const assignmentId = req.params.AssignmentId;
+
+    const assignment = await Assignment.findById(assignmentId)
+      .populate("scores.studentId", "name email")
+      .select("scores");
+
+    if (!assignment) {
+      return res.status(404).json({ message: "Assignment not found" });
+    }
+
+    const scoresDetails = assignment.scores.map((score) => ({
+      studentId: score.studentId,
+      obtainedMarks: score.obtainedMarks,
+      passed: score.passed,
+      examDate: score.examDate,
+    }));
+
+    res.json(scoresDetails); // Send the detailed scores
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ message: "Server error", error: error.message });
+  }
+};

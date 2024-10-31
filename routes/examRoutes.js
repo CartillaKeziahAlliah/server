@@ -16,5 +16,6 @@ router.get("/:examId", examController.getExamById);
 router.delete("/:examId", examController.deleteExam);
 
 router.put("/:examId", examController.editExam); // <-- Add this route for editing an exam
+router.get("/:examId/scores", examController.getExamScores);
 
 module.exports = router;
