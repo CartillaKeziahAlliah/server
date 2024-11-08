@@ -130,7 +130,28 @@ const getStudentSubjects = async (req, res) => {
     return res.status(500).json({ message: "Internal server error" });
   }
 };
+const getSubjectById = async (req, res) => {
+  const { subjectId } = req.params;
+
+  try {
+    const subject = await Subject.findById(subjectId)
+      .populate("teacher", "name avatar")
+      .populate("section", "section_name");
+
+    if (!subject) {
+      return res.status(404).json({ message: "Subject not found." });
+    }
+
+    return res.status(200).json(subject);
+  } catch (error) {
+    console.error("Error fetching subject by ID:", error);
+    return res
+      .status(500)
+      .json({ message: "Internal server error", error: error.message });
+  }
+};
 module.exports = {
+  getSubjectById,
   addSubject,
   getAllSubjectsByTeacherId,
   getSubjectsBySectionId,

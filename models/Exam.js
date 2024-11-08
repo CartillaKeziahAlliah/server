@@ -63,7 +63,6 @@ const examSchema = new Schema({
     {
       studentId: {
         type: mongoose.Schema.Types.ObjectId,
-        ref: "User",
         required: true,
       },
       obtainedMarks: {
