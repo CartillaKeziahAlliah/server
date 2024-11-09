@@ -24,6 +24,6 @@ router.put(
 
 router.post("/assignlrn/:userId", assignLRN);
 
-router.post("/user/addSection", addSectionToUser);
+router.post("/addSection", addSectionToUser);
 
 module.exports = router;
