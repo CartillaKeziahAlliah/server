@@ -19,6 +19,6 @@ router.put(
   updateProfile
 );
 
-router.post("/assign-lrn/:userId", assignLRN);
+router.post("/assignlrn/:userId", assignLRN);
 
 module.exports = router;
