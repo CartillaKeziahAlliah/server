@@ -2,8 +2,11 @@ const express = require("express");
 const { login, logout, signup } = require("../controllers/AuthController");
 const authenticateToken = require("../middlewares/authenticateToken");
 const { uploadProfilePicture } = require("../middlewares/multer");
-const { updateProfile, assignLRN } = require("../controllers/usersController");
-const { post } = require("./quizRoutes");
+const {
+  updateProfile,
+  assignLRN,
+  addSectionToUser,
+} = require("../controllers/usersController");
 
 const router = express.Router();
 
@@ -20,5 +23,7 @@ router.put(
 );
 
 router.post("/assignlrn/:userId", assignLRN);
+
+router.post("/user/addSection", addSectionToUser);
 
 module.exports = router;

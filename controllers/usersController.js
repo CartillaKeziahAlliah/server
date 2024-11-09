@@ -2,6 +2,7 @@ const { json } = require("express");
 const cloudinary = require("../config/cloudinary");
 const User = require("../models/User");
 const bcrypt = require("bcryptjs");
+const Section = require("../models/Section"); // Adjust the path as needed
 
 exports.getProfile = async (req, res) => {
   try {
@@ -86,5 +87,39 @@ exports.assignLRN = async (req, res) => {
   } catch (error) {
     console.error(error);
     res.status(500).json({ error: "Failed to assign LRN to the user" });
+  }
+};
+
+exports.addSectionToUser = async (req, res) => {
+  try {
+    const { userId, sectionId } = req.body;
+
+    // Check if the section exists
+    const section = await Section.findById(sectionId);
+    if (!section) {
+      return res.status(404).json({ message: "Section not found" });
+    }
+
+    // Find the user by ID
+    const user = await User.findById(userId);
+    if (!user) {
+      return res.status(404).json({ message: "User not found" });
+    }
+
+    // Check if section is already assigned to the user
+    if (user.sections.includes(sectionId)) {
+      return res.status(400).json({ message: "Section already added to user" });
+    }
+
+    // Add the section to the user's sections array
+    user.sections.push(sectionId);
+    await user.save();
+
+    res
+      .status(200)
+      .json({ message: "Section added to user successfully", user });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ message: "Internal server error" });
   }
 };
