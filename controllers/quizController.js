@@ -349,7 +349,9 @@ exports.editQuiz = async (req, res) => {
 
 exports.takeQuiz = async (req, res) => {
   try {
-    const { quizId, answers, studentId } = req.body;
+    const { quizId } = req.params; // Exam ID from URL
+
+    const { answers, studentId } = req.body;
 
     // Fetch the quiz from the database
     const quiz = await Quiz.findById(quizId);
@@ -394,5 +396,40 @@ exports.takeQuiz = async (req, res) => {
     res
       .status(500)
       .json({ message: "An error occurred while taking the quiz" });
+  }
+};
+
+exports.checkIfUserHasTakenExam = async (req, res) => {
+  try {
+    const userId = req.body.userId;
+
+    const quizId = req.params.quizId;
+
+    if (!userId) {
+      return res.status(400).json({ message: "User ID is required" });
+    }
+
+    const quiz = await Exam.findById(quizId);
+
+    if (!quiz) {
+      return res.status(404).json({ message: "Quiz not Found" });
+    }
+
+    const hasTaken = quiz.scores.some(
+      (score) => score.studentId.toString() === userId.toString()
+    );
+
+    if (hasTaken) {
+      return res
+        .status(200)
+        .json({ message: "You have already taken this exam" });
+    }
+
+    return res
+      .status(200)
+      .json({ message: "You have not taken this exam yet" });
+  } catch (error) {
+    console.error(error);
+    return res.status(500).json({ message: "Server Error" });
   }
 };

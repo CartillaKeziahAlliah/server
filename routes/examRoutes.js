@@ -1,5 +1,6 @@
 const express = require("express");
 const router = express.Router();
+exports.router = router;
 const examController = require("../controllers/examController");
 
 // POST /exams - Create a new exam

@@ -27,4 +27,6 @@ router.post("/submit/:quizId/:userId", quizController.submitExam);
 
 router.get("/scores/:userId", quizController.fetchScoresByUserId);
 
+router.post("/:quizId/take", quizController.takeQuiz);
+
 module.exports = router;
