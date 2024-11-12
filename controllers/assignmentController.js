@@ -1,6 +1,7 @@
 const { json } = require("express");
 const Assignment = require("../models/Assignment");
 const Subject = require("../models/Subject");
+const mongoose = require("mongoose");
 
 // Create a new assignment
 exports.createAssignment = async (req, res) => {
@@ -251,5 +252,63 @@ exports.getAssScores = async (req, res) => {
   } catch (error) {
     console.error(error);
     res.status(500).json({ message: "Server error", error: error.message });
+  }
+};
+
+exports.takeAssignment = async (req, res) => {
+  try {
+    const { assignmentId } = req.params;
+    const { studentId, answers } = req.body;
+
+    const assignment = await Assignment.findById(assignmentId).exec();
+    if (!assignment)
+      return res.status(404).json({ message: "Assignment not found" });
+
+    let obtainedMarks = 0;
+
+    if (
+      Array.isArray(answers) &&
+      answers.length === assignment.questions.length
+    ) {
+      assignment.questions.forEach((question, index) => {
+        const studentAnswer = answers[index];
+
+        if (
+          typeof studentAnswer === "number" && // Check that it's a number
+          studentAnswer >= 0 && // Check that it's not a negative index
+          studentAnswer < question.options.length // Ensure it doesn't exceed options array length
+        ) {
+          const selectedOption = question.options[studentAnswer];
+          if (selectedOption && selectedOption.isCorrect) {
+            obtainedMarks += question.marks; // Add marks if the answer is correct
+          }
+        } else {
+          console.warn(`Invalid answer at index ${index}:`, studentAnswer);
+        }
+      });
+    }
+
+    const passed = obtainedMarks >= assignment.passMarks;
+
+    assignment.scores.push({
+      studentId: new mongoose.Types.ObjectId(studentId), // Fixed instantiation here
+      obtainedMarks,
+      passed,
+      assignmentDate: new Date(),
+    });
+
+    await assignment.save();
+    return res.json({
+      message: "Exam completed successfully",
+      obtainedMarks,
+      totalMarks: assignment.totalMarks,
+      passMarks: assignment.passMarks,
+      passed,
+    });
+  } catch (error) {
+    console.error(error);
+    return res
+      .status(500)
+      .json({ message: "An error occurred while taking the exam" });
   }
 };

@@ -2,6 +2,7 @@ const { json } = require("express");
 const Quiz = require("../models/Quiz"); // Update model import to Quiz
 const Subject = require("../models/Subject");
 const User = require("../models/User"); // Adjust the path as needed
+const mongoose = require("mongoose");
 
 // Create a new quiz
 exports.createQuiz = async (req, res) => {
@@ -349,46 +350,51 @@ exports.editQuiz = async (req, res) => {
 
 exports.takeQuiz = async (req, res) => {
   try {
-    const { quizId } = req.params; // Exam ID from URL
-
+    const { quizId } = req.params;
     const { answers, studentId } = req.body;
 
-    // Fetch the quiz from the database
-    const quiz = await Quiz.findById(quizId);
+    const quiz = await Quiz.findById(quizId).exec();
     if (!quiz) {
       return res.status(404).json({ message: "Quiz not found" });
     }
 
-    // Calculate the obtained marks
     let obtainedMarks = 0;
-    quiz.questions.forEach((question, index) => {
-      const answer = answers[index];
-      const correctOption = question.options.find((option) => option.isCorrect);
 
-      // Check if the student's answer matches the correct answer
-      if (correctOption && correctOption.optionText === answer) {
-        obtainedMarks += question.marks;
-      }
-    });
+    if (!Array.isArray(answers) || answers.length !== quiz.questions.length) {
+      quiz.questions.forEach((question, index) => {
+        const studentAnswer = answers[index];
 
-    // Determine if the student passed
+        if (
+          typeof studentAnswer === "number" &&
+          studentAnswer >= 0 && // Check that it's not a negative index
+          studentAnswer < question.options.length
+        ) {
+          const selectedOption = question.options[studentAnswer];
+          if (selectedOption && selectedOption.isCorrect) {
+            obtainedMarks += question.marks;
+          }
+        } else {
+          console.warn(`Invalid answer at index ${index}:`, studentAnswer);
+        }
+      });
+    }
+
     const passed = obtainedMarks >= quiz.passMarks;
 
-    // Record the score
     quiz.scores.push({
-      studentId,
+      studentId: new mongoose.Types.ObjectId(studentId), // Fixed instantiation here
       obtainedMarks,
       passed,
       examDate: new Date(),
     });
 
-    // Save the updated quiz with the new score entry
     await quiz.save();
 
     res.status(200).json({
       message: "Quiz submitted successfully",
       obtainedMarks,
       totalMarks: quiz.totalMarks,
+      passMarks: quiz.passMarks,
       passed,
     });
   } catch (error) {

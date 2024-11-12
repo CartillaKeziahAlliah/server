@@ -74,6 +74,8 @@ const getStudentsInSection = async (req, res) => {
       .json({ message: "Server error", error: error.message });
   }
 };
+
+
 module.exports = {
   addSection,
   getSectionById,

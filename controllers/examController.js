@@ -215,39 +215,36 @@ exports.getExamScores = async (req, res) => {
 
 exports.takeExam = async (req, res) => {
   try {
-    const { examId } = req.params; // Exam ID from URL
-    const { studentId, answers } = req.body; // Student ID and answers from request body
+    const { examId } = req.params; 
+    const { studentId, answers } = req.body; 
 
-    // Find the exam by ID
     const exam = await Exam.findById(examId).exec();
     if (!exam) {
       return res.status(404).json({ message: "Exam not found" });
     }
 
-    // Ensure answers length matches number of questions
-    if (!Array.isArray(answers) || answers.length !== exam.questions.length) {
-      return res.status(400).json({ message: "Invalid answers array length" });
-    }
-
-    // Validate the answers and calculate marks
     let obtainedMarks = 0;
-    exam.questions.forEach((question, index) => {
-      const studentAnswer = answers[index]; // Assuming answers array matches question array order
 
-      // Ensure that studentAnswer is a number and within bounds of question.options array
-      if (
-        typeof studentAnswer === "number" && // Check that it's a number
-        studentAnswer >= 0 && // Check that it's not a negative index
-        studentAnswer < question.options.length // Ensure it doesn't exceed options array length
-      ) {
-        const selectedOption = question.options[studentAnswer];
-        if (selectedOption && selectedOption.isCorrect) {
-          obtainedMarks += question.marks; // Add marks if the answer is correct
+    // If answers are provided, process them
+    if (Array.isArray(answers) && answers.length === exam.questions.length) {
+      exam.questions.forEach((question, index) => {
+        const studentAnswer = answers[index]; // Assuming answers array matches question array order
+
+        // Ensure that studentAnswer is a number and within bounds of question.options array
+        if (
+          typeof studentAnswer === "number" && // Check that it's a number
+          studentAnswer >= 0 && // Check that it's not a negative index
+          studentAnswer < question.options.length // Ensure it doesn't exceed options array length
+        ) {
+          const selectedOption = question.options[studentAnswer];
+          if (selectedOption && selectedOption.isCorrect) {
+            obtainedMarks += question.marks; // Add marks if the answer is correct
+          }
+        } else {
+          console.warn(`Invalid answer at index ${index}:`, studentAnswer);
         }
-      } else {
-        console.warn(`Invalid answer at index ${index}:`, studentAnswer);
-      }
-    });
+      });
+    }
 
     // Check if the student passed or failed
     const passed = obtainedMarks >= exam.passMarks;

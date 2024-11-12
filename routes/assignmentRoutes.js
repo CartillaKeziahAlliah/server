@@ -19,4 +19,5 @@ router.get("/scores/:userId", assignmentController.fetchScoresByUserId);
 
 router.get("/:AssignmentId/scores", assignmentController.getAssScores);
 
+router.post("/:assignmentId/take", assignmentController.takeAssignment);
 module.exports = router;
