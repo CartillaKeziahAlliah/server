@@ -1,6 +1,7 @@
 const { json } = require("express");
 const Quiz = require("../models/Quiz"); // Update model import to Quiz
 const Subject = require("../models/Subject");
+const User = require("../models/User"); // Adjust the path as needed
 
 // Create a new quiz
 exports.createQuiz = async (req, res) => {
@@ -12,6 +13,7 @@ exports.createQuiz = async (req, res) => {
       questions,
       duration,
       totalMarks,
+      passMarks,
       deadline,
     } = req.body;
 
@@ -73,6 +75,16 @@ exports.createQuiz = async (req, res) => {
         .json({ message: "Total marks must be a positive number." });
     }
     if (
+      typeof passMarks !== "number" ||
+      passMarks <= 0 ||
+      passMarks > totalMarks
+    ) {
+      return res.status(400).json({
+        message:
+          "Pass marks must be a positive number and less than or equal to total marks.",
+      });
+    }
+    if (
       !deadline ||
       !(new Date(deadline) instanceof Date) ||
       isNaN(new Date(deadline))
@@ -90,7 +102,8 @@ exports.createQuiz = async (req, res) => {
       questions,
       duration,
       totalMarks,
-      deadline, // Save the deadline
+      passMarks, // Save the pass marks
+      deadline,
     });
 
     // Save the quiz to the database
@@ -331,5 +344,55 @@ exports.editQuiz = async (req, res) => {
     res
       .status(500)
       .json({ message: "Error updating quiz", error: error.message });
+  }
+};
+
+exports.takeQuiz = async (req, res) => {
+  try {
+    const { quizId, answers, studentId } = req.body;
+
+    // Fetch the quiz from the database
+    const quiz = await Quiz.findById(quizId);
+    if (!quiz) {
+      return res.status(404).json({ message: "Quiz not found" });
+    }
+
+    // Calculate the obtained marks
+    let obtainedMarks = 0;
+    quiz.questions.forEach((question, index) => {
+      const answer = answers[index];
+      const correctOption = question.options.find((option) => option.isCorrect);
+
+      // Check if the student's answer matches the correct answer
+      if (correctOption && correctOption.optionText === answer) {
+        obtainedMarks += question.marks;
+      }
+    });
+
+    // Determine if the student passed
+    const passed = obtainedMarks >= quiz.passMarks;
+
+    // Record the score
+    quiz.scores.push({
+      studentId,
+      obtainedMarks,
+      passed,
+      examDate: new Date(),
+    });
+
+    // Save the updated quiz with the new score entry
+    await quiz.save();
+
+    res.status(200).json({
+      message: "Quiz submitted successfully",
+      obtainedMarks,
+      totalMarks: quiz.totalMarks,
+      passed,
+    });
+  } catch (error) {
+    console.error("Error taking quiz:", error);
+    res
+      .status(500)
+      .json({ message: "An error occurred while taking the quiz" });
   }
 };

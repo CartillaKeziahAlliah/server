@@ -47,6 +47,10 @@ const quizSchema = new Schema({
     type: Number,
     required: true, // Total marks for the quiz
   },
+  passMarks: {
+    type: Number,
+    required: true,
+  },
   deadline: {
     type: Date,
     required: true, // Marked as required
