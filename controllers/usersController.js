@@ -3,7 +3,9 @@ const cloudinary = require("../config/cloudinary");
 const User = require("../models/User");
 const bcrypt = require("bcryptjs");
 const Section = require("../models/Section"); // Adjust the path as needed
-
+const Assignment = require("../models/Assignment");
+const Exam = require("../models/Exam");
+const Quiz = require("../models/Quiz");
 exports.getProfile = async (req, res) => {
   try {
     const userId = req.user.id;
@@ -23,9 +25,9 @@ exports.getProfile = async (req, res) => {
 exports.updateProfile = async (req, res) => {
   try {
     const userId = req.user.id;
-    const { name, email, password } = req.body;
+    const { name, password } = req.body;
 
-    let updatedUserData = { name, email };
+    let updatedUserData = { name };
 
     if (password) {
       const salt = await bcrypt.genSalt(10);
@@ -121,5 +123,79 @@ exports.addSectionToUser = async (req, res) => {
   } catch (error) {
     console.error(error);
     res.status(500).json({ message: "Internal server error" });
+  }
+};
+exports.getUserScoresWithActivity = async (req, res) => {
+  const { userId } = req.params; // Get userId from request parameters
+
+  try {
+    // Fetch assignments, exams, and quizzes with subject populated for the specified userId
+    const assignments = await Assignment.find({ "scores.studentId": userId })
+      .populate("subject", "subject_name") // Populate the 'subject' field, but only include the 'name' field of the subject
+      .lean();
+
+    const exams = await Exam.find({ "scores.studentId": userId })
+      .populate("subject", "subject_name") // Populate subject name
+      .lean();
+
+    const quizzes = await Quiz.find({ "scores.studentId": userId })
+      .populate("subject", "subject_name") // Populate subject name
+      .lean();
+
+    // Filter each activity's scores for the specified userId and include activity info
+    const assignmentScores = assignments.map((assignment) => ({
+      activity: {
+        title: assignment.title,
+        description: assignment.description,
+        subject: assignment.subject.subject_name, // Use populated subject name
+        duration: assignment.duration,
+        totalMarks: assignment.totalMarks,
+        passMarks: assignment.passMarks,
+        deadline: assignment.deadline,
+      },
+      score: assignment.scores.find(
+        (score) => score.studentId.toString() === userId
+      ),
+    }));
+
+    const examScores = exams.map((exam) => ({
+      activity: {
+        title: exam.title,
+        description: exam.description,
+        subject: exam.subject.subject_name, // Use populated subject name
+        duration: exam.duration,
+        totalMarks: exam.totalMarks,
+        passMarks: exam.passMarks,
+      },
+      score: exam.scores.find((score) => score.studentId.toString() === userId),
+    }));
+
+    const quizScores = quizzes.map((quiz) => ({
+      activity: {
+        title: quiz.title,
+        description: quiz.description,
+        subject: quiz.subject.subject_name, // Use populated subject name
+        duration: quiz.duration,
+        totalMarks: quiz.totalMarks,
+        passMarks: quiz.passMarks,
+        deadline: quiz.deadline,
+      },
+      score: quiz.scores.find((score) => score.studentId.toString() === userId),
+    }));
+
+    // Combine all scores into a single object
+    const userScoresWithActivities = {
+      assignments: assignmentScores,
+      exams: examScores,
+      quizzes: quizScores,
+    };
+
+    // Send response
+    res.status(200).json(userScoresWithActivities);
+  } catch (error) {
+    res.status(500).json({
+      message: "Error fetching scores with activity information",
+      error,
+    });
   }
 };

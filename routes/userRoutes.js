@@ -6,6 +6,7 @@ const {
   updateProfile,
   assignLRN,
   addSectionToUser,
+  getUserScoresWithActivity,
 } = require("../controllers/usersController");
 
 const router = express.Router();
@@ -25,5 +26,6 @@ router.put(
 router.post("/assignlrn/:userId", assignLRN);
 
 router.post("/addSection", addSectionToUser);
+router.get("/user-scores/:userId", getUserScoresWithActivity);
 
 module.exports = router;
