@@ -120,7 +120,6 @@ exports.getAssignmentsBySubject = async (req, res) => {
     const { subjectId } = req.params;
     const assignments = await Assignment.find({ subject: subjectId })
       .populate("subject", "subject_name teacher section")
-      .populate("scores.studentId");
 
     if (!assignments || assignments.length === 0) {
       return res
