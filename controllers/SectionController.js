@@ -30,13 +30,16 @@ const getMySections = async (req, res) => {
   try {
     const { id } = req.params;
 
-    const sections = await Section.find({ teacher: id });
+    // Find sections where the provided teacher ID is in the `teacher` array
+    const sections = await Section.find({ teacher: { $in: [id] } });
+
     res.status(200).json(sections);
   } catch (error) {
     console.error("Error fetching sections:", error);
     res.status(500).json({ message: "Error fetching sections" });
   }
 };
+
 const getSectionById = async (req, res) => {
   try {
     const { id } = req.params;
@@ -74,7 +77,6 @@ const getStudentsInSection = async (req, res) => {
       .json({ message: "Server error", error: error.message });
   }
 };
-
 
 module.exports = {
   addSection,
