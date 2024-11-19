@@ -6,6 +6,7 @@ const sectionSchema = new mongoose.Schema(
     grade_level: { type: String, required: true },
     teacher: [{ type: mongoose.Schema.Types.ObjectId, ref: "User" }],
     students: [{ type: mongoose.Schema.Types.ObjectId, ref: "User" }],
+    adviser: { type: String, required: false },
   },
   { timestamps: true }
 );

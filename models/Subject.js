@@ -16,7 +16,6 @@ const subjectSchema = new mongoose.Schema(
     start_time: { type: String, required: true },
     end_time: { type: String, required: true },
     schedule: { type: String, required: true },
-    adviser: { type: String, required: false },
   },
   { timestamps: true }
 );
