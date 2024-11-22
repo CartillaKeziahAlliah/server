@@ -58,7 +58,7 @@ const examRoutes = require("./routes/examRoutes");
 const assignmentRoutes = require("./routes/assignmentRoutes");
 const quizRoutes = require("./routes/quizRoutes");
 const discussionRoutes = require("./routes/discussionRoute");
-
+const managedByAdmin = require("./routes/AdminManage");
 app.use("/api/users", userRoutes);
 app.use("/api/LoggedIn", LoggedinRoute);
 app.use("/api/calendar", Calendar);
@@ -69,6 +69,7 @@ app.use("/api/exam", examRoutes);
 app.use("/api/assignment", assignmentRoutes);
 app.use("/api/quiz", quizRoutes);
 app.use("/api/discussion", discussionRoutes);
+app.use("/api/manage", managedByAdmin);
 
 app.use((req, res, next) => {
   res.status(404).json({ message: "Route not found" });
