@@ -1,14 +1,12 @@
-const { json } = require("express");
 const Section = require("../models/Section");
 const addSection = async (req, res) => {
   try {
-    const { section_name, grade_level, teacher, students } = req.body;
+    const { section_name, grade_level, adviser } = req.body;
 
     const newSection = new Section({
       section_name,
       grade_level,
-      teacher,
-      students,
+      adviser,
     });
 
     const savedSection = await newSection.save();
@@ -77,10 +75,116 @@ const getStudentsInSection = async (req, res) => {
       .json({ message: "Server error", error: error.message });
   }
 };
+const getAllSections = async (req, res) => {
+  try {
+    const sections = await Section.find()
+      .populate("teacher", "name avatar")
+      .populate("students", "name avatar");
+    res.status(200).json(sections);
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ message: "Error retrieving sections" });
+  }
+};
+const updateSection = async (req, res) => {
+  try {
+    const { sectionId } = req.params; // Get the section ID from params
+    const { section_name, adviser } = req.body; // Get the new section name and adviser from request body
 
+    const section = await Section.findById(sectionId);
+    if (!section) {
+      return res.status(404).json({ message: "Section not found" });
+    }
+
+    // Update the section's name and adviser
+    section.section_name = section_name || section.section_name;
+    section.adviser = adviser || section.adviser;
+
+    // Save the updated section
+    await section.save();
+    res.status(200).json({ message: "Section updated successfully", section });
+  } catch (error) {
+    res.status(500).json({ message: "Server error", error: error.message });
+  }
+};
+
+// Controller for deleting a section
+const deleteSection = async (req, res) => {
+  try {
+    const { sectionId } = req.params; // Get the section ID from params
+
+    const section = await Section.findById(sectionId);
+    if (!section) {
+      return res.status(404).json({ message: "Section not found" });
+    }
+
+    // Delete the section
+    await section.remove();
+    res.status(200).json({ message: "Section deleted successfully" });
+  } catch (error) {
+    res.status(500).json({ message: "Server error", error: error.message });
+  }
+};
+const addTeacher = async (req, res) => {
+  try {
+    const { sectionId, userId } = req.params; // Get the sectionId and userId from params
+
+    // Find the section by sectionId
+    const section = await Section.findById(sectionId);
+    if (!section) {
+      return res.status(404).json({ message: "Section not found" });
+    }
+
+    // Check if the user is already in the teacher array
+    if (section.teacher.includes(userId)) {
+      return res.status(400).json({ message: "Teacher already added" });
+    }
+
+    // Add the userId to the teacher array
+    section.teacher.push(userId);
+
+    // Save the updated section
+    await section.save();
+    res.status(200).json({ message: "Teacher added successfully", section });
+  } catch (error) {
+    res.status(500).json({ message: "Server error", error: error.message });
+  }
+};
+
+// Controller for adding a student to a section
+const addStudent = async (req, res) => {
+  try {
+    const { sectionId, userId } = req.params; // Get the sectionId and userId from params
+
+    // Find the section by sectionId
+    const section = await Section.findById(sectionId);
+    if (!section) {
+      return res.status(404).json({ message: "Section not found" });
+    }
+
+    // Check if the user is already in the students array
+    if (section.students.includes(userId)) {
+      return res.status(400).json({ message: "Student already added" });
+    }
+
+    // Add the userId to the students array
+    section.students.push(userId);
+
+    // Save the updated section
+    await section.save();
+    res.status(200).json({ message: "Student added successfully", section });
+  } catch (error) {
+    res.status(500).json({ message: "Server error", error: error.message });
+  }
+};
 module.exports = {
+  updateSection,
+  deleteSection,
+  getAllSections,
   addSection,
   getSectionById,
   getMySections,
   getStudentsInSection,
+  addTeacher,
+  addStudent,
 };

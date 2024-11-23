@@ -199,3 +199,19 @@ exports.getUserScoresWithActivity = async (req, res) => {
     });
   }
 };
+
+exports.getAllTeachers = async (req, res) => {
+  try {
+    // Find users where the role is "teacher"
+    const teachers = await User.find({ role: "teacher" });
+
+    // Return the results
+    res.status(200).json(teachers);
+  } catch (error) {
+    console.error("Error fetching teachers:", error);
+    res.status(500).json({
+      success: false,
+      message: "An error occurred while fetching teachers",
+    });
+  }
+};

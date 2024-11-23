@@ -13,9 +13,6 @@ const subjectSchema = new mongoose.Schema(
       ref: "Section",
       required: false,
     },
-    start_time: { type: String, required: true },
-    end_time: { type: String, required: true },
-    schedule: { type: String, required: true },
   },
   { timestamps: true }
 );

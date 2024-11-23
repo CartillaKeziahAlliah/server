@@ -7,6 +7,7 @@ const {
   assignLRN,
   addSectionToUser,
   getUserScoresWithActivity,
+  getAllTeachers,
 } = require("../controllers/usersController");
 
 const router = express.Router();
@@ -27,5 +28,5 @@ router.post("/assignlrn/:userId", assignLRN);
 
 router.post("/addSection", addSectionToUser);
 router.get("/user-scores/:userId", getUserScoresWithActivity);
-
+router.get("/users", getAllTeachers);
 module.exports = router;

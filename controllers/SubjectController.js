@@ -5,17 +5,9 @@ const { json } = require("express");
 
 const addSubject = async (req, res) => {
   try {
-    const { subject_name, teacher, section, start_time, end_time, schedule } =
-      req.body;
+    const { subject_name, teacher, section } = req.body;
 
-    if (
-      !subject_name ||
-      !teacher ||
-      !section ||
-      !start_time ||
-      !end_time ||
-      !schedule
-    ) {
+    if (!subject_name || !teacher || !section) {
       return res.status(400).json({ error: "All fields are required" });
     }
 
@@ -33,9 +25,6 @@ const addSubject = async (req, res) => {
       subject_name,
       teacher,
       section,
-      start_time,
-      end_time,
-      schedule,
     });
 
     const savedSubject = await newSubject.save();
