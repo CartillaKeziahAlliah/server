@@ -78,8 +78,9 @@ const getStudentsInSection = async (req, res) => {
 const getAllSections = async (req, res) => {
   try {
     const sections = await Section.find()
-      .populate("teacher", "name avatar")
-      .populate("students", "name avatar");
+      .populate("teacher", "name avatar _id")
+      .populate("students", "name avatar")
+      .populate("adviser", "name avatar");
     res.status(200).json(sections);
   } catch (error) {
     console.error(error);
@@ -111,20 +112,26 @@ const updateSection = async (req, res) => {
 // Controller for deleting a section
 const deleteSection = async (req, res) => {
   try {
-    const { sectionId } = req.params; // Get the section ID from params
+    const { sectionId } = req.params; // Ensure param name matches the route
 
     const section = await Section.findById(sectionId);
     if (!section) {
       return res.status(404).json({ message: "Section not found" });
     }
 
-    // Delete the section
-    await section.remove();
+    // Delete the section directly
+    await Section.findByIdAndDelete(sectionId);
+
     res.status(200).json({ message: "Section deleted successfully" });
   } catch (error) {
-    res.status(500).json({ message: "Server error", error: error.message });
+    console.error("Error deleting section:", error.message);
+    res.status(500).json({
+      message: "Server error while deleting the section.",
+      error: error.message || "Unknown error",
+    });
   }
 };
+
 const addTeacher = async (req, res) => {
   try {
     const { sectionId, userId } = req.params; // Get the sectionId and userId from params

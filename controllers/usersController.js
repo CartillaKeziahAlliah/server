@@ -215,3 +215,77 @@ exports.getAllTeachers = async (req, res) => {
     });
   }
 };
+exports.getAllTeachersExlcudedinsection = async (req, res) => {
+  try {
+    const sectionId = req.params.sectionId; // Extract sectionId from params
+
+    // Find the section by the provided sectionId and extract the teacher references
+    const section = await Section.findById(sectionId).select("teacher");
+
+    if (!section) {
+      return res.status(404).json({
+        success: false,
+        message: "Section not found",
+      });
+    }
+
+    // Get teacher IDs from the section
+    const teacherIdsInSection = section.teacher;
+
+    // Find all teachers who are NOT in this section's teacher array
+    const teachers = await User.find({
+      role: "teacher",
+      _id: { $nin: teacherIdsInSection }, // Exclude teachers already in the section
+    });
+
+    // Return the results
+    res.status(200).json(teachers);
+  } catch (error) {
+    console.error("Error fetching teachers:", error);
+    res.status(500).json({
+      success: false,
+      message: "An error occurred while fetching teachers",
+    });
+  }
+};
+exports.updateUserRoleToMasterAdmin = async (req, res) => {
+  try {
+    const { userId } = req.params; // Extract user ID from the request parameters
+
+    // Check if user ID is provided
+    if (!userId) {
+      return res.status(400).json({ message: "User ID is required" });
+    }
+
+    // Find the user and update the role to masterAdmin
+    const user = await User.findByIdAndUpdate(
+      userId,
+      { role: "masterAdmin" },
+      { new: true, runValidators: true } // Return updated document and apply schema validations
+    );
+
+    // If the user is not found
+    if (!user) {
+      return res.status(404).json({ message: "User not found" });
+    }
+
+    // Success response
+    res.status(200).json({
+      message: "User role updated to masterAdmin successfully",
+      user,
+    });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ message: "Server error", error: error.message });
+  }
+};
+exports.getStudents = async (req, res) => {
+  try {
+    const students = await User.find({ role: "student" });
+    console.log("Students:", students);
+    res.status(200).json(students);
+  } catch (error) {
+    console.error("Error fetching students:", error);
+    throw error;
+  }
+};
