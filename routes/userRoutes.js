@@ -11,6 +11,9 @@ const {
   getAllTeachersExlcudedinsection,
   updateUserRoleToMasterAdmin,
   getStudents,
+  addOrUpdateStudentSection,
+  getStudentsWithoutLRN,
+  addOrUpdateLRN,
 } = require("../controllers/usersController");
 
 const router = express.Router();
@@ -36,4 +39,9 @@ router.get("/user-scores/:userId", getUserScoresWithActivity);
 router.get("/users", getAllTeachers);
 router.get("/excludedusers/:sectionId", getAllTeachersExlcudedinsection);
 router.get("/students", getStudents);
+router.get("/students/without-lrn", getStudentsWithoutLRN);
+router.post("/students/add-lrn", addOrUpdateLRN);
+
+router.post("/add-student", addOrUpdateStudentSection);
+
 module.exports = router;

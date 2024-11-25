@@ -281,11 +281,126 @@ exports.updateUserRoleToMasterAdmin = async (req, res) => {
 };
 exports.getStudents = async (req, res) => {
   try {
-    const students = await User.find({ role: "student" });
-    console.log("Students:", students);
+    const students = await User.find({
+      role: "student",
+      LRN: { $exists: true, $ne: null }, // Check if 'lrn' exists and is not null
+    })
+      .populate({
+        path: "sections",
+        select: "section_name grade_level",
+      })
+      .select("-password"); // Exclude sensitive fields like password
+
     res.status(200).json(students);
   } catch (error) {
     console.error("Error fetching students:", error);
-    throw error;
+    res.status(500).json({ message: "Failed to fetch students" });
+  }
+};
+exports.getStudentsWithoutLRN = async (req, res) => {
+  try {
+    const studentsWithoutLRN = await User.find({
+      role: "student",
+      $or: [{ LRN: { $exists: false } }, { LRN: null }, { LRN: "" }],
+    });
+
+    res.status(200).json({
+      success: true,
+      data: studentsWithoutLRN,
+    });
+  } catch (error) {
+    console.error("Error fetching students without LRN:", error);
+    res.status(500).json({
+      success: false,
+      message: "Server error. Could not fetch students.",
+      error: error.message,
+    });
+  }
+};
+exports.addOrUpdateLRN = async (req, res) => {
+  try {
+    const { userId, LRN } = req.body;
+
+    // Validate request data
+    if (!userId || !LRN) {
+      return res.status(400).json({
+        success: false,
+        message: "userId and LRN are required.",
+      });
+    }
+
+    // Find and update the user
+    const updatedUser = await User.findOneAndUpdate(
+      { _id: userId, role: "student" }, // Ensure it's a student
+      { LRN }, // Update the LRN
+      { new: true, runValidators: true } // Return the updated document
+    );
+
+    if (!updatedUser) {
+      return res.status(404).json({
+        success: false,
+        message: "Student not found or invalid role.",
+      });
+    }
+
+    res.status(200).json({
+      success: true,
+      message: "LRN updated successfully.",
+      data: updatedUser,
+    });
+  } catch (error) {
+    console.error("Error updating LRN:", error);
+    res.status(500).json({
+      success: false,
+      message: "Server error. Could not update LRN.",
+      error: error.message,
+    });
+  }
+};
+exports.addOrUpdateStudentSection = async (req, res) => {
+  const { studentId, sectionId } = req.body;
+
+  try {
+    // Check if the section exists
+    const newSection = await Section.findById(sectionId);
+    if (!newSection) {
+      return res.status(404).json({ message: "Section not found" });
+    }
+
+    // Check if the student exists
+    const student = await User.findById(studentId);
+    if (!student) {
+      return res.status(404).json({ message: "Student not found" });
+    }
+
+    // Remove student from all current sections
+    if (student.sections.length > 0) {
+      const currentSections = student.sections;
+
+      // Update all current sections to remove the student's ID
+      await Section.updateMany(
+        { _id: { $in: currentSections } },
+        { $pull: { students: studentId } }
+      );
+    }
+
+    // Update the student's sections array to only include the new section
+    student.sections = [sectionId];
+    await student.save();
+
+    // Add the student to the new section's students array if not already present
+    if (!newSection.students.includes(studentId)) {
+      newSection.students.push(studentId);
+      await newSection.save();
+    }
+
+    return res.status(200).json({
+      message: "Student successfully moved to new section",
+      section: newSection,
+      student,
+    });
+  } catch (error) {
+    console.error("Error updating student in section:", error);
+    return res.status(500).json({ message: "Internal server error" });
   }
 };
