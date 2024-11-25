@@ -14,6 +14,7 @@ const allowedOrigins = [
   "http://localhost:5173",
   "https://backend-production-55e3.up.railway.app",
   "http://localhost:3000",
+  "https://tnhs.vercel.app",
 ];
 
 app.use(

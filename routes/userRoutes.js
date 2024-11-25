@@ -14,6 +14,7 @@ const {
   addOrUpdateStudentSection,
   getStudentsWithoutLRN,
   addOrUpdateLRN,
+  getUserStatistics,
 } = require("../controllers/usersController");
 
 const router = express.Router();
@@ -43,5 +44,6 @@ router.get("/students/without-lrn", getStudentsWithoutLRN);
 router.post("/students/add-lrn", addOrUpdateLRN);
 
 router.post("/add-student", addOrUpdateStudentSection);
+router.get("/statistics", getUserStatistics);
 
 module.exports = router;

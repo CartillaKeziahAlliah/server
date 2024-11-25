@@ -404,3 +404,55 @@ exports.addOrUpdateStudentSection = async (req, res) => {
     return res.status(500).json({ message: "Internal server error" });
   }
 };
+exports.getUserStatistics = async (req, res) => {
+  try {
+    // Define all possible roles and statuses
+    const allRoles = ["student", "admin", "teacher", "masterAdmin"];
+    const allStatuses = ["blocked", "Dropped", "Active"];
+
+    // Get count of users by role
+    const rolesCount = await User.aggregate([
+      { $group: { _id: "$role", count: { $sum: 1 } } },
+    ]);
+
+    // Get count of users by status
+    const statusCount = await User.aggregate([
+      { $group: { _id: "$status", count: { $sum: 1 } } },
+    ]);
+
+    // Initialize objects with default values
+    const roles = allRoles.reduce((acc, role) => {
+      acc[role] = 0; // Default count for each role is 0
+      return acc;
+    }, {});
+
+    const statuses = allStatuses.reduce((acc, status) => {
+      acc[status] = 0; // Default count for each status is 0
+      return acc;
+    }, {});
+
+    // Fill in the actual counts for roles and statuses
+    rolesCount.forEach((item) => {
+      if (roles[item._id] !== undefined) {
+        roles[item._id] = item.count;
+      }
+    });
+
+    statusCount.forEach((item) => {
+      if (statuses[item._id] !== undefined) {
+        statuses[item._id] = item.count;
+      }
+    });
+
+    // Structure the response
+    const statistics = {
+      roles,
+      statuses,
+    };
+
+    res.status(200).json({ success: true, data: statistics });
+  } catch (error) {
+    console.error("Error fetching user statistics:", error);
+    res.status(500).json({ success: false, message: "Server error" });
+  }
+};
