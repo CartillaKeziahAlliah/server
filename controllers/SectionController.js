@@ -3,6 +3,15 @@ const addSection = async (req, res) => {
   try {
     const { section_name, grade_level, adviser } = req.body;
 
+    // Check if the section name already exists
+    const existingSection = await Section.findOne({ section_name });
+    if (existingSection) {
+      return res.status(400).json({
+        message: "Section name already exists",
+      });
+    }
+
+    // Create a new section if it doesn't exist
     const newSection = new Section({
       section_name,
       grade_level,
