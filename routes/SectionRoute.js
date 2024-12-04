@@ -23,7 +23,7 @@ router.get("/:id/students", getStudentsInSection);
 
 router.get("/", getAllSections);
 
-router.put("/:sectionId", updateSection);
+router.patch("/:sectionId", updateSection);
 
 router.delete("/:sectionId", deleteSection);
 
