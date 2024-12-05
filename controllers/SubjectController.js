@@ -65,9 +65,10 @@ const getSubjectsBySectionId = async (req, res) => {
       .populate("teacher", "name avatar")
       .exec();
 
-    // Return 0 if no subjects are found
     if (!subjects.length) {
-      return res.status(200).json(0);
+      return res
+        .status(404)
+        .json({ message: "No subjects found for this section." });
     }
 
     return res.status(200).json(subjects);
