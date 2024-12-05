@@ -200,14 +200,14 @@ exports.addAdmin = async (req, res) => {
 exports.getSubjects = async (req, res) => {
   try {
     const subjects = await Subject.find()
-      .populate({
-        path: "teacher",
-        select: "name", // Replace 'name' with the actual field name for the teacher's name
-      })
-      .populate({
-        path: "section",
-        select: "section_name", // Replace 'name' with the actual field name for the section's name
-      });
+      .populate(
+        "teacher",
+        "name" // Replace 'name' with the actual field name for the teacher's name
+      )
+      .populate(
+        "section",
+        "section_name" // Replace 'name' with the actual field name for the section's name
+      );
 
     res.status(200).json(subjects);
   } catch (error) {
