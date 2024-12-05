@@ -360,33 +360,47 @@ exports.takeQuiz = async (req, res) => {
 
     let obtainedMarks = 0;
 
-    if (!Array.isArray(answers) || answers.length !== quiz.questions.length) {
+    if (Array.isArray(answers) && answers.length === quiz.questions.length) {
       quiz.questions.forEach((question, index) => {
-        const studentAnswer = answers[index];
+        const studentAnswer = answers[index] ?? -1;
 
         if (
           typeof studentAnswer === "number" &&
-          studentAnswer >= 0 && // Check that it's not a negative index
+          studentAnswer >= 0 &&
           studentAnswer < question.options.length
         ) {
           const selectedOption = question.options[studentAnswer];
-          if (selectedOption && selectedOption.isCorrect) {
+          if (selectedOption?.isCorrect) {
             obtainedMarks += question.marks;
           }
         } else {
           console.warn(`Invalid answer at index ${index}:`, studentAnswer);
         }
       });
+    } else {
+      return res.status(400).json({ message: "Invalid answers provided." });
     }
 
     const passed = obtainedMarks >= quiz.passMarks;
 
-    quiz.scores.push({
-      studentId: new mongoose.Types.ObjectId(studentId), // Fixed instantiation here
-      obtainedMarks,
-      passed,
-      examDate: new Date(),
-    });
+    const existingScoreIndex = quiz.scores.findIndex(
+      (score) => score.studentId.toString() === studentId
+    );
+    if (existingScoreIndex > -1) {
+      quiz.scores[existingScoreIndex] = {
+        studentId,
+        obtainedMarks,
+        passed,
+        examDate: new Date(),
+      };
+    } else {
+      quiz.scores.push({
+        studentId,
+        obtainedMarks,
+        passed,
+        examDate: new Date(),
+      });
+    }
 
     await quiz.save();
 
