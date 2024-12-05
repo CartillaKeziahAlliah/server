@@ -1,4 +1,7 @@
 const Section = require("../models/Section");
+const Assignment = require("../models/Assignment");
+const Exam = require("../models/Exam");
+const Quiz = require("../models/Quiz");
 const addSection = async (req, res) => {
   try {
     const { section_name, grade_level, adviser } = req.body;
@@ -63,22 +66,73 @@ const getSectionById = async (req, res) => {
     res.status(500).json({ message: "Server error", error });
   }
 };
-const getStudentsInSection = async (req, res) => {
-  const sectionId = req.params.id; // Get the section ID from request parameters
+const getStudentsInSectionWithPassingRates = async (req, res) => {
+  const sectionId = req.params.id;
 
   try {
+    // Find the section and populate students
     const section = await Section.findById(sectionId).populate("students");
 
     if (!section) {
       return res.status(404).json({ message: "Section not found" });
     }
 
+    const studentIds = section.students.map((student) =>
+      student._id.toString()
+    );
+    const userScores = {};
+
+    // Helper function to process scores
+    const processScores = (scores) => {
+      scores.forEach((score) => {
+        const { studentId, passed } = score;
+
+        if (studentIds.includes(studentId.toString())) {
+          if (!userScores[studentId]) {
+            userScores[studentId] = { totalAttempts: 0, passedCount: 0 };
+          }
+
+          userScores[studentId].totalAttempts += 1;
+          if (passed) {
+            userScores[studentId].passedCount += 1;
+          }
+        }
+      });
+    };
+
+    // Fetch and process Assignment, Exam, and Quiz scores
+    const assignmentScores = await Assignment.find({}, "scores").lean();
+    assignmentScores.forEach((assignment) => processScores(assignment.scores));
+
+    const examScores = await Exam.find({}, "scores").lean();
+    examScores.forEach((exam) => processScores(exam.scores));
+
+    const quizScores = await Quiz.find({}, "scores").lean();
+    quizScores.forEach((quiz) => processScores(quiz.scores));
+
+    // Calculate passing percentage for each student in the section
+    const studentsWithPassingRates = section.students.map((student) => {
+      const studentId = student._id.toString();
+      const { totalAttempts = 0, passedCount = 0 } =
+        userScores[studentId] || {};
+
+      const passingPercentage =
+        totalAttempts > 0
+          ? ((passedCount / totalAttempts) * 100).toFixed(2)
+          : "0.00";
+
+      return {
+        ...student.toObject(),
+        passingPercentage,
+      };
+    });
+
     return res.status(200).json({
       sectionId: section._id,
-      students: section.students,
+      students: studentsWithPassingRates,
     });
   } catch (error) {
-    console.error("Error fetching students:", error);
+    console.error("Error fetching students and passing rates:", error);
     return res
       .status(500)
       .json({ message: "Server error", error: error.message });
@@ -200,7 +254,7 @@ module.exports = {
   addSection,
   getSectionById,
   getMySections,
-  getStudentsInSection,
+  getStudentsInSectionWithPassingRates,
   addTeacher,
   addStudent,
 };

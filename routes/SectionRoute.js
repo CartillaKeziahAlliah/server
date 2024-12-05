@@ -3,7 +3,7 @@ const {
   addSection,
   getMySections,
   getSectionById,
-  getStudentsInSection,
+  getStudentsInSectionWithPassingRates,
   getAllSections,
   updateSection,
   deleteSection,
@@ -19,7 +19,7 @@ router.get("/:id", getMySections);
 
 router.get("/currentsection/:id", getSectionById);
 
-router.get("/:id/students", getStudentsInSection);
+router.get("/:id/students", getStudentsInSectionWithPassingRates);
 
 router.get("/", getAllSections);
 
