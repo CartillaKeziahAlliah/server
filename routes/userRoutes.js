@@ -36,7 +36,7 @@ router.put("/:userId/master-admin", updateUserRoleToMasterAdmin);
 router.post("/assignlrn/:userId", assignLRN);
 
 router.post("/addSection", addSectionToUser);
-router.get("/user-scores/:userId", getUserScoresWithActivity);
+router.get("/user-scores/:userId/:subjectId", getUserScoresWithActivity);
 router.get("/users", getAllTeachers);
 router.get("/excludedusers/:sectionId", getAllTeachersExlcudedinsection);
 router.get("/students", getStudents);

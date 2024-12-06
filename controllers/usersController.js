@@ -126,23 +126,32 @@ exports.addSectionToUser = async (req, res) => {
   }
 };
 exports.getUserScoresWithActivity = async (req, res) => {
-  const { userId } = req.params; // Get userId from request parameters
+  const { userId, subjectId } = req.params; // Get userId and subjectId from request parameters
 
   try {
-    // Fetch assignments, exams, and quizzes with subject populated for the specified userId
-    const assignments = await Assignment.find({ "scores.studentId": userId })
-      .populate("subject", "subject_name") // Populate the 'subject' field, but only include the 'name' field of the subject
+    // Fetch assignments, exams, and quizzes for the specified userId and subjectId
+    const assignments = await Assignment.find({
+      "scores.studentId": userId,
+      subject: subjectId,
+    })
+      .populate("subject", "subject_name") // Populate the subject name
       .lean();
 
-    const exams = await Exam.find({ "scores.studentId": userId })
-      .populate("subject", "subject_name") // Populate subject name
+    const exams = await Exam.find({
+      "scores.studentId": userId,
+      subject: subjectId,
+    })
+      .populate("subject", "subject_name") // Populate the subject name
       .lean();
 
-    const quizzes = await Quiz.find({ "scores.studentId": userId })
-      .populate("subject", "subject_name") // Populate subject name
+    const quizzes = await Quiz.find({
+      "scores.studentId": userId,
+      subject: subjectId,
+    })
+      .populate("subject", "subject_name") // Populate the subject name
       .lean();
 
-    // Filter each activity's scores for the specified userId and include activity info
+    // Map scores to include activity information for the specific subject
     const assignmentScores = assignments.map((assignment) => ({
       activity: {
         title: assignment.title,
@@ -183,18 +192,22 @@ exports.getUserScoresWithActivity = async (req, res) => {
       score: quiz.scores.find((score) => score.studentId.toString() === userId),
     }));
 
-    // Combine all scores into a single object
-    const userScoresWithActivities = {
+    // Combine all scores for the specific subject into a single object
+    const userScoresForSubject = {
+      subject:
+        assignments[0]?.subject.subject_name ||
+        exams[0]?.subject.subject_name ||
+        quizzes[0]?.subject.subject_name,
       assignments: assignmentScores,
       exams: examScores,
       quizzes: quizScores,
     };
 
     // Send response
-    res.status(200).json(userScoresWithActivities);
+    res.status(200).json(userScoresForSubject);
   } catch (error) {
     res.status(500).json({
-      message: "Error fetching scores with activity information",
+      message: "Error fetching scores for the specified subject",
       error,
     });
   }
