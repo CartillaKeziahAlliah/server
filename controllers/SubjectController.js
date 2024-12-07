@@ -38,16 +38,19 @@ const addSubject = async (req, res) => {
 
 const getAllSubjectsByTeacherId = async (req, res) => {
   const teacherId = req.params.teacherId;
+  const sectionId = req.params.sectionId; // Assuming sectionId is passed as a URL parameter
 
   try {
-    const subjects = await Subject.find({ teacher: teacherId }).populate(
-      "section"
-    );
+    // Fetch subjects for a specific teacher and section
+    const subjects = await Subject.find({
+      teacher: teacherId,
+      section: sectionId,
+    }).populate("section");
 
     if (!subjects.length) {
-      return res
-        .status(404)
-        .json({ message: "No subjects found for this teacher." });
+      return res.status(404).json({
+        message: `No subjects found for this teacher in section ${sectionId}.`,
+      });
     }
 
     res.status(200).json(subjects);
@@ -56,6 +59,7 @@ const getAllSubjectsByTeacherId = async (req, res) => {
     res.status(500).json({ message: "Server error", error });
   }
 };
+
 const getSubjectsBySectionId = async (req, res) => {
   const { sectionId } = req.params; // Assuming sectionId is passed as a URL parameter
 

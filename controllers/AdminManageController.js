@@ -332,7 +332,7 @@ exports.updateSubject = async (req, res) => {
       }
 
       if (newTeacher) {
-        // Ensure the new section is in the teacher's sections array
+        // Ensure the new section is in the teacher's sections array, without duplicates
         if (!newTeacher.sections.some((id) => id.toString() === newSectionId)) {
           newTeacher.sections.push(newSectionId);
         }
@@ -345,20 +345,20 @@ exports.updateSubject = async (req, res) => {
       const currentSection = await Section.findById(currentSectionId);
       const currentTeacher = await User.findById(currentTeacherId);
 
-      if (
-        currentSection &&
-        !currentSection.teacher.includes(currentTeacherId)
-      ) {
-        currentSection.teacher.push(currentTeacherId);
-        await currentSection.save();
+      if (currentSection) {
+        // Ensure the current teacher is in the section's teacher array, without duplicates
+        if (!currentSection.teacher.includes(currentTeacherId)) {
+          currentSection.teacher.push(currentTeacherId);
+          await currentSection.save();
+        }
       }
 
-      if (
-        currentTeacher &&
-        !currentTeacher.sections.includes(currentSectionId)
-      ) {
-        currentTeacher.sections.push(currentSectionId);
-        await currentTeacher.save();
+      if (currentTeacher) {
+        // Ensure the current section is in the teacher's sections array, without duplicates
+        if (!currentTeacher.sections.includes(currentSectionId)) {
+          currentTeacher.sections.push(currentSectionId);
+          await currentTeacher.save();
+        }
       }
     }
 
