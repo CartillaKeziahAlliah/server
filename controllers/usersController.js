@@ -113,7 +113,6 @@ exports.addSectionToUser = async (req, res) => {
       return res.status(400).json({ message: "Section already added to user" });
     }
 
-    // Add the section to the user's sections array
     user.sections.push(sectionId);
     await user.save();
 
@@ -126,7 +125,7 @@ exports.addSectionToUser = async (req, res) => {
   }
 };
 exports.getUserScoresWithActivity = async (req, res) => {
-  const { userId, subjectId } = req.params; // Get userId and subjectId from request parameters
+  const { userId, subjectId } = req.params; 
 
   try {
     // Fetch assignments, exams, and quizzes for the specified userId and subjectId
@@ -203,7 +202,6 @@ exports.getUserScoresWithActivity = async (req, res) => {
       quizzes: quizScores,
     };
 
-    // Send response
     res.status(200).json(userScoresForSubject);
   } catch (error) {
     res.status(500).json({

@@ -2,6 +2,7 @@ const User = require("../models/User");
 const bcrypt = require("bcryptjs");
 const Section = require("../models/Section"); // Assuming the path to the Section model
 const Subject = require("../models/Subject"); // Assuming the path to the Subject model
+const mongoose = require("mongoose");
 
 exports.getTeachers = async (req, res) => {
   try {
@@ -216,20 +217,6 @@ exports.getSubjects = async (req, res) => {
 };
 
 // Controller to update a subject
-exports.updateSubject = async (req, res) => {
-  try {
-    const { subject_name, teacher, section } = req.body;
-    const updatedSubject = await Subject.findByIdAndUpdate(
-      req.params.id,
-      { subject_name, teacher, section },
-      { new: true }
-    );
-
-    res.status(200).json(updatedSubject);
-  } catch (error) {
-    res.status(500).json({ message: "Error updating subject", error });
-  }
-};
 
 // Controller to delete a subject
 exports.deleteSubject = async (req, res) => {
@@ -240,42 +227,149 @@ exports.deleteSubject = async (req, res) => {
     res.status(500).json({ message: "Error deleting subject", error });
   }
 };
-
 exports.addSubject = async (req, res) => {
+  const session = await mongoose.startSession();
+  session.startTransaction();
+
   try {
-    // Destructure the request body to get subject details
     const { subject_name, teacherId, sectionId } = req.body;
 
-    // Check if the section exists
+    // Validate section
     const section = sectionId ? await Section.findById(sectionId) : null;
     if (sectionId && !section) {
       return res.status(404).json({ message: "Section not found" });
     }
 
-    // Check if the teacher exists
+    // Validate teacher
     const teacher = teacherId ? await User.findById(teacherId) : null;
     if (teacherId && !teacher) {
       return res.status(404).json({ message: "Teacher not found" });
     }
 
-    // Create a new Subject
+    // Create a new subject
     const newSubject = new Subject({
       subject_name,
       teacher: teacher ? teacher._id : null,
       section: section ? section._id : null,
     });
 
-    // Save the new subject to the database
-    await newSubject.save();
+    // Save the subject
+    await newSubject.save({ session });
 
-    // Return the created subject
+    // Update relationships if section and teacher are provided
+    if (section && teacher) {
+      // Update section's teacher array
+      if (!section.teacher.some((id) => id.equals(teacher._id))) {
+        section.teacher.push(teacher._id);
+        await section.save({ session });
+        console.log("Updated section teacher array:", section.teacher);
+      }
+
+      // Update teacher's sections array
+      if (!teacher.sections.some((id) => id.equals(section._id))) {
+        teacher.sections.push(section._id);
+        await teacher.save({ session });
+        console.log("Updated teacher sections array:", teacher.sections);
+      }
+    }
+
+    // Commit transaction
+    await session.commitTransaction();
+    session.endSession();
+
+    // Return success response
     return res
       .status(201)
       .json({ message: "Subject created successfully", subject: newSubject });
   } catch (error) {
-    console.error(error);
+    // Rollback transaction
+    await session.abortTransaction();
+    session.endSession();
+
+    console.error("Error in addSubject:", error);
     return res
       .status(500)
       .json({ message: "Server error", error: error.message });
+  }
+};
+
+exports.updateSubject = async (req, res) => {
+  try {
+    const {
+      subject_name,
+      teacher: newTeacherId,
+      section: newSectionId,
+    } = req.body;
+
+    // Find the existing subject
+    const existingSubject = await Subject.findById(req.params.id);
+    if (!existingSubject) {
+      return res.status(404).json({ message: "Subject not found" });
+    }
+
+    // Extract current relationships
+    const currentSectionId = existingSubject.section?.toString();
+    const currentTeacherId = existingSubject.teacher?.toString();
+
+    // Update the subject details
+    const updatedSubject = await Subject.findByIdAndUpdate(
+      req.params.id,
+      { subject_name, teacher: newTeacherId, section: newSectionId },
+      { new: true }
+    );
+
+    // Handle adding the teacher to the new section
+    if (newSectionId && newTeacherId) {
+      const newSection = await Section.findById(newSectionId);
+      const newTeacher = await User.findById(newTeacherId);
+
+      if (newSection) {
+        // Ensure the teacher is in the new section's teacher array
+        if (!newSection.teacher.some((id) => id.toString() === newTeacherId)) {
+          newSection.teacher.push(newTeacherId);
+        }
+        await newSection.save();
+      }
+
+      if (newTeacher) {
+        // Ensure the new section is in the teacher's sections array
+        if (!newTeacher.sections.some((id) => id.toString() === newSectionId)) {
+          newTeacher.sections.push(newSectionId);
+        }
+        await newTeacher.save();
+      }
+    }
+
+    // Ensure existing associations are preserved
+    if (currentSectionId && currentTeacherId) {
+      const currentSection = await Section.findById(currentSectionId);
+      const currentTeacher = await User.findById(currentTeacherId);
+
+      if (
+        currentSection &&
+        !currentSection.teacher.includes(currentTeacherId)
+      ) {
+        currentSection.teacher.push(currentTeacherId);
+        await currentSection.save();
+      }
+
+      if (
+        currentTeacher &&
+        !currentTeacher.sections.includes(currentSectionId)
+      ) {
+        currentTeacher.sections.push(currentSectionId);
+        await currentTeacher.save();
+      }
+    }
+
+    // Return success response
+    res
+      .status(200)
+      .json({ message: "Subject updated successfully", updatedSubject });
+  } catch (error) {
+    console.error(error);
+    res
+      .status(500)
+      .json({ message: "Error updating subject", error: error.message });
   }
 };
