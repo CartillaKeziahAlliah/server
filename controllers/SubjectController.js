@@ -38,19 +38,16 @@ const addSubject = async (req, res) => {
 
 const getAllSubjectsByTeacherId = async (req, res) => {
   const teacherId = req.params.teacherId;
-  const sectionId = req.params.sectionId; // Assuming sectionId is passed as a URL parameter
 
   try {
-    // Fetch subjects for a specific teacher and section
-    const subjects = await Subject.find({
-      teacher: teacherId,
-      section: sectionId,
-    }).populate("section");
+    const subjects = await Subject.find({ teacher: teacherId }).populate(
+      "section"
+    );
 
     if (!subjects.length) {
-      return res.status(404).json({
-        message: `No subjects found for this teacher in section ${sectionId}.`,
-      });
+      return res
+        .status(404)
+        .json({ message: "No subjects found for this teacher." });
     }
 
     res.status(200).json(subjects);
@@ -59,7 +56,6 @@ const getAllSubjectsByTeacherId = async (req, res) => {
     res.status(500).json({ message: "Server error", error });
   }
 };
-
 const getSubjectsBySectionId = async (req, res) => {
   const { sectionId } = req.params; // Assuming sectionId is passed as a URL parameter
 
@@ -81,6 +77,27 @@ const getSubjectsBySectionId = async (req, res) => {
     return res
       .status(500)
       .json({ message: "Server error.", error: error.message });
+  }
+};
+
+const getSubjectById = async (req, res) => {
+  const { subjectId } = req.params;
+
+  try {
+    const subject = await Subject.findById(subjectId)
+      .populate("teacher", "name avatar")
+      .populate("section", "section_name");
+
+    if (!subject) {
+      return res.status(404).json({ message: "Subject not found." });
+    }
+
+    return res.status(200).json(subject);
+  } catch (error) {
+    console.error("Error fetching subject by ID:", error);
+    return res
+      .status(500)
+      .json({ message: "Internal server error", error: error.message });
   }
 };
 
@@ -120,26 +137,6 @@ const getStudentSubjects = async (req, res) => {
   } catch (error) {
     console.error("Error fetching student subjects:", error);
     return res.status(500).json({ message: "Internal server error" });
-  }
-};
-const getSubjectById = async (req, res) => {
-  const { subjectId } = req.params;
-
-  try {
-    const subject = await Subject.findById(subjectId)
-      .populate("teacher", "name avatar")
-      .populate("section", "section_name");
-
-    if (!subject) {
-      return res.status(404).json({ message: "Subject not found." });
-    }
-
-    return res.status(200).json(subject);
-  } catch (error) {
-    console.error("Error fetching subject by ID:", error);
-    return res
-      .status(500)
-      .json({ message: "Internal server error", error: error.message });
   }
 };
 module.exports = {
