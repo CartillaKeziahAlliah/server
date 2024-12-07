@@ -5,6 +5,11 @@ const router = express.Router();
 
 router.post("/", subjectController.addSubject);
 router.get("/:teacherId", subjectController.getAllSubjectsByTeacherId);
+router.get(
+  "/TSubject/:teacherId/:sectionId",
+  subjectController.getAllSubjectsByTeacherId
+);
+
 router.get("/section/:sectionId", subjectController.getSubjectsBySectionId);
 router.get(
   "/student/:studentId/subjects",
