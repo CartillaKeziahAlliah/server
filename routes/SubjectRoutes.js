@@ -4,7 +4,10 @@ const subjectController = require("../controllers/SubjectController"); // Adjust
 const router = express.Router();
 
 router.post("/", subjectController.addSubject);
-router.get("/:teacherId", subjectController.getAllSubjectsByTeacherId);
+router.get(
+  "/:teacherId",
+  subjectController.getAllSubjectsByTeacherIdandSection
+);
 router.get(
   "/TSubject/:teacherId/:sectionId",
   subjectController.getAllSubjectsByTeacherId
