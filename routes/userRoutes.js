@@ -12,9 +12,10 @@ const {
   updateUserRoleToMasterAdmin,
   getStudents,
   addOrUpdateStudentSection,
-  getStudentsWithoutLRN,
+  getUsersWithRequestStatus,
   addOrUpdateLRN,
   getUserStatistics,
+  updateUserStatusToActive,
 } = require("../controllers/usersController");
 
 const router = express.Router();
@@ -40,10 +41,11 @@ router.get("/user-scores/:userId/:subjectId", getUserScoresWithActivity);
 router.get("/users", getAllTeachers);
 router.get("/excludedusers/:sectionId", getAllTeachersExlcudedinsection);
 router.get("/students", getStudents);
-router.get("/students/without-lrn", getStudentsWithoutLRN);
+router.get("/students/without-lrn", getUsersWithRequestStatus);
 router.post("/students/add-lrn", addOrUpdateLRN);
 
 router.post("/add-student", addOrUpdateStudentSection);
 router.get("/statistics", getUserStatistics);
+router.patch("/approve/:userId", updateUserStatusToActive);
 
 module.exports = router;

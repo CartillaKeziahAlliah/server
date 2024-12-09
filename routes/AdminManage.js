@@ -29,4 +29,6 @@ router.delete("/subjects/:id", AdminManageController.deleteSubject);
 
 router.post("/add", AdminManageController.addSubject);
 
+router.delete("/user/:userId", AdminManageController.deleteUser);
+
 module.exports = router;

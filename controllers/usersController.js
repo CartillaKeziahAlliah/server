@@ -125,7 +125,7 @@ exports.addSectionToUser = async (req, res) => {
   }
 };
 exports.getUserScoresWithActivity = async (req, res) => {
-  const { userId, subjectId } = req.params; 
+  const { userId, subjectId } = req.params;
 
   try {
     // Fetch assignments, exams, and quizzes for the specified userId and subjectId
@@ -308,22 +308,18 @@ exports.getStudents = async (req, res) => {
     res.status(500).json({ message: "Failed to fetch students" });
   }
 };
-exports.getStudentsWithoutLRN = async (req, res) => {
+exports.getUsersWithRequestStatus = async (req, res) => {
   try {
-    const studentsWithoutLRN = await User.find({
-      role: "student",
-      $or: [{ LRN: { $exists: false } }, { LRN: null }, { LRN: "" }],
-    });
-
+    const users = await User.find({ status: "Request" }); // Query users with status "Request"
     res.status(200).json({
       success: true,
-      data: studentsWithoutLRN,
+      data: users,
     });
   } catch (error) {
-    console.error("Error fetching students without LRN:", error);
+    console.error("Error fetching users with Request status:", error);
     res.status(500).json({
       success: false,
-      message: "Server error. Could not fetch students.",
+      message: "Failed to fetch users with Request status",
       error: error.message,
     });
   }
@@ -465,5 +461,36 @@ exports.getUserStatistics = async (req, res) => {
   } catch (error) {
     console.error("Error fetching user statistics:", error);
     res.status(500).json({ success: false, message: "Server error" });
+  }
+};
+
+exports.updateUserStatusToActive = async (req, res) => {
+  const { userId } = req.params; // Retrieve userId from URL params
+  try {
+    const user = await User.findByIdAndUpdate(
+      userId, // Find the user by ID
+      { status: "Active" }, // Update the status to "Active"
+      { new: true } // Return the updated document
+    );
+
+    if (!user) {
+      return res.status(404).json({
+        success: false,
+        message: "User not found",
+      });
+    }
+
+    res.status(200).json({
+      success: true,
+      message: "User status updated to Active",
+      data: user,
+    });
+  } catch (error) {
+    console.error("Error updating user status:", error);
+    res.status(500).json({
+      success: false,
+      message: "Failed to update user status",
+      error: error.message,
+    });
   }
 };
