@@ -127,13 +127,14 @@ exports.removeAdmin = async (req, res) => {
   const { id } = req.params;
 
   try {
-    // Find and delete the user with the specified ID and roles
-    const deletedUser = await User.findOneAndDelete({
-      _id: id,
-      role: { $in: ["admin", "masterAdmin"] },
-    });
+    // Find the user by ID and update the role to "formerAdmin"
+    const updatedUser = await User.findOneAndUpdate(
+      { _id: id, role: { $in: ["admin", "masterAdmin"] } }, // Match admin or masterAdmin roles
+      { role: "formerAdmin" }, // Update role to "formerAdmin"
+      { new: true } // Return the updated document
+    );
 
-    if (!deletedUser) {
+    if (!updatedUser) {
       return res.status(404).json({
         success: false,
         message: "Admin or Master Admin not found",
@@ -142,13 +143,13 @@ exports.removeAdmin = async (req, res) => {
 
     res.status(200).json({
       success: true,
-      message: "User removed successfully",
-      data: deletedUser,
+      message: "User status updated to 'formerAdmin' successfully",
+      data: updatedUser,
     });
   } catch (error) {
     res.status(500).json({
       success: false,
-      message: "Failed to remove user",
+      message: "Failed to update user status",
       error: error.message,
     });
   }
