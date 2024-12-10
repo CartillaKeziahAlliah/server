@@ -21,12 +21,22 @@ exports.addEvent = async (req, res) => {
   try {
     const { event_title, event_date, event_time, note, student } = req.body;
 
-    const [hours, minutes] = event_time.split(":");
-    const eventDateTime = new Date(event_date);
-    eventDateTime.setHours(hours);
-    eventDateTime.setMinutes(minutes);
-    eventDateTime.setSeconds(0);
+    // Validate input
+    if (!event_title || !event_date || !event_time) {
+      return res.status(400).json({ message: "Required fields are missing" });
+    }
 
+    // Parse event_time
+    const [hours, minutes] = event_time.split(":").map(Number); // Ensure hours and minutes are numbers
+    if (isNaN(hours) || isNaN(minutes)) {
+      return res.status(400).json({ message: "Invalid time format" });
+    }
+
+    // Combine event_date and event_time into a Date object
+    const eventDateTime = new Date(event_date);
+    eventDateTime.setHours(hours, minutes, 0, 0); // Set hours, minutes, seconds, and milliseconds
+
+    // Create a new event
     const newEvent = new Calendar({
       event_title,
       event_datetime: eventDateTime,
@@ -34,11 +44,15 @@ exports.addEvent = async (req, res) => {
       student,
     });
 
+    // Save to database
     await newEvent.save();
+
     res.status(201).json({ message: "Event added successfully", newEvent });
   } catch (error) {
     console.error("Error adding event:", error);
-    res.status(500).json({ message: "Error adding event", error });
+    res
+      .status(500)
+      .json({ message: "Error adding event", error: error.message });
   }
 };
 

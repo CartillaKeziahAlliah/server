@@ -18,16 +18,15 @@ exports.login = async (req, res) => {
       return res.status(400).json({ error: "User not found" });
     }
 
+    console.log("User status:", user.status); // Debugging log
+
+    if (user.status.toLowerCase() === "request".toLowerCase()) {
+      return res.status(403).json({ error: "Account is not yet approved" });
+    }
+
     const isPasswordValid = await bcrypt.compare(password, user.password);
     if (!isPasswordValid) {
       return res.status(401).json({ error: "Incorrect password" });
-    }
-
-    // Check if the user is a 'user' and if they have an 'lrn'
-    if (user.role === "student" && !user.LRN) {
-      return res
-        .status(403)
-        .json({ error: "You have not been approved by the school" });
     }
 
     const token = jwt.sign({ id: user._id }, JWT_SECRET, { expiresIn: "1h" });
@@ -40,34 +39,40 @@ exports.login = async (req, res) => {
   }
 };
 
-// Signup
 exports.signup = async (req, res) => {
-  const { name, email, password } = req.body;
+  console.log("Request Body:", req.body); // Log payload for debugging
+
+  const { name, username, idNumber, email, password, lrn } = req.body;
 
   try {
-    if (!name || !email || !password) {
-      return res
-        .status(400)
-        .json({ error: "Name, email, and password are required" });
-    }
-
-    const existingUser = await User.findOne({ email });
-    if (existingUser) {
-      return res.status(400).json({ error: "User already exists" });
+    if (!name || !username || !idNumber || !email || !password || !lrn) {
+      return res.status(400).json({
+        error:
+          "Name, username, idNumber, email, password, and LRN are required",
+      });
     }
 
     const hashedPassword = await bcrypt.hash(password, 10);
 
     const user = new User({
       name,
+      username,
+      idNumber,
       email,
       password: hashedPassword,
+      LRN: lrn, // Ensure this is being passed into the database schema
       role: "student",
+      status: "Request",
     });
+
+    console.log("User Payload to Save:", user);
 
     await user.save();
 
-    res.status(201).json({ message: "User created successfully" });
+    res.status(201).json({
+      message: "User created successfully",
+      status: "requested",
+    });
   } catch (error) {
     console.error("Signup error:", error);
     res.status(500).json({ error: "Server error" });

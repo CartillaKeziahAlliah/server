@@ -25,12 +25,24 @@ exports.getTeachers = async (req, res) => {
 
 exports.addInstructor = async (req, res) => {
   try {
-    const { email, password, name } = req.body;
+    const { email, password, name, username, idNumber } = req.body;
 
-    // Check if the instructor already exists
-    const existingInstructor = await User.findOne({ email });
-    if (existingInstructor) {
+    // Check if the instructor email already exists
+    const existingInstructorByEmail = await User.findOne({ email });
+    if (existingInstructorByEmail) {
       return res.status(400).json({ error: "Email already exists" });
+    }
+
+    // Check if the username already exists
+    const existingInstructorByUsername = await User.findOne({ username });
+    if (existingInstructorByUsername) {
+      return res.status(400).json({ error: "Username already exists" });
+    }
+
+    // Check if the ID number already exists
+    const existingInstructorByIdNumber = await User.findOne({ idNumber });
+    if (existingInstructorByIdNumber) {
+      return res.status(400).json({ error: "ID number already exists" });
     }
 
     // Hash the password before saving
@@ -40,8 +52,10 @@ exports.addInstructor = async (req, res) => {
     const newInstructor = new User({
       name,
       email,
+      username, // Save the username
+      idNumber, // Save the ID number
       password: hashedPassword, // Store the hashed password
-      role: "teacher", // set role to teacher for new instructor
+      role: "teacher", // Set role to teacher for new instructor
     });
 
     // Save the instructor
@@ -54,6 +68,7 @@ exports.addInstructor = async (req, res) => {
     res.status(500).json({ error: "Server error" });
   }
 };
+
 exports.blockUser = async (req, res) => {
   try {
     const { userId } = req.params;
@@ -372,5 +387,24 @@ exports.updateSubject = async (req, res) => {
     res
       .status(500)
       .json({ message: "Error updating subject", error: error.message });
+  }
+};
+exports.deleteUser = async (req, res) => {
+  try {
+    const { userId } = req.params;
+
+    // Check if the user exists
+    const user = await User.findById(userId);
+    if (!user) {
+      return res.status(404).json({ message: "User not found" });
+    }
+
+    // Delete the user
+    await User.findByIdAndDelete(userId);
+
+    return res.status(200).json({ message: "User deleted successfully" });
+  } catch (error) {
+    console.error("Error deleting user:", error);
+    return res.status(500).json({ message: "An error occurred", error });
   }
 };
